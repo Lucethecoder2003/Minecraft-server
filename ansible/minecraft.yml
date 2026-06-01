@@ -1,0 +1,23 @@
+---
+# minecraft.yml — top-level playbook
+# Installs Docker, deploys the Minecraft container, and configures
+# a systemd service so the server restarts on reboot.
+
+- name: Configure Minecraft server
+  hosts: minecraft
+  become: true
+  gather_facts: true
+
+  vars:
+    minecraft_version: "latest"
+    minecraft_data_dir: "/opt/minecraft/data"
+    minecraft_port: 25565
+    server_memory: "768M"
+    eula_accepted: "TRUE"   # set to TRUE to accept Minecraft EULA
+    difficulty: "normal"
+    max_players: 20
+    motd: "Acme Corp Minecraft Server"
+    view_distance: 10
+
+  roles:
+    - minecraft

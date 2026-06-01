@@ -1,0 +1,39 @@
+[Unit]
+Description=Minecraft Java Server (Docker)
+Documentation=https://github.com/itzg/docker-minecraft-server
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+Restart=on-failure
+RestartSec=10s
+
+# Remove any stale container from a previous run before starting
+ExecStartPre=-/usr/bin/docker rm -f minecraft
+
+ExecStart=/usr/bin/docker run \
+  --rm \
+  --name minecraft \
+  -e EULA={{ eula_accepted }} \
+  -e VERSION={{ minecraft_version }} \
+  -e MEMORY={{ server_memory }} \
+  -e DIFFICULTY={{ difficulty }} \
+  -e MAX_PLAYERS={{ max_players }} \
+  -e MOTD="{{ motd }}" \
+  -e VIEW_DISTANCE={{ view_distance }} \
+  -p {{ minecraft_port }}:25565/tcp \
+  -p {{ minecraft_port }}:25565/udp \
+  -v {{ minecraft_data_dir }}:/data \
+  itzg/minecraft-server:{{ minecraft_version }}
+
+# Graceful shutdown — sends 'stop' command to the Minecraft console
+# This prevents world corruption on reboot/shutdown
+ExecStop=/usr/bin/docker exec minecraft rcon-cli stop
+
+TimeoutStartSec=120
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target
