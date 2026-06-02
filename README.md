@@ -57,9 +57,9 @@ Your Workstation
       │
       └── ansible-playbook  ──►  EC2 Instance
                                       │
-                                      │- Docker Engine
-                                      │       - itzg/minecraft-server container
-                                      │               - port 25565 (TCP/UDP)
+                                      ├── Docker Engine
+                                      │       └── itzg/minecraft-server container
+                                      │               └── port 25565 (TCP/UDP)
                                       │
                                       └── systemd: minecraft.service
                                               ├── Restart=on-failure
@@ -97,22 +97,41 @@ This project targets **AWS Academy Learner Lab** credentials. Retrieve them as f
 
 1. Open the **Learner Lab** module on Canvas.
 2. Click **AWS Details** → **Show** next to *AWS CLI*.
-3. Copy the three export lines and paste them in your terminal:
+3. Copy the credentials and paste them into `~/.aws/credentials`:
 
 ```bash
-export AWS_ACCESS_KEY_ID="ASIA..."
-export AWS_SECRET_ACCESS_KEY="..."
-export AWS_SESSION_TOKEN="..."
+nano ~/.aws/credentials
 ```
 
-> Learner Lab credentials expire after a few hours. Re-export them if you see `ExpiredTokenException`.
+The file should look like this:
+
+```
+[default]
+aws_access_key_id=ASIA...
+aws_secret_access_key=...
+aws_session_token=...
+```
+
+Save with `Ctrl+X` → `Y` → `Enter`, then verify:
+
+```bash
+aws sts get-caller-identity
+```
+
+> Learner Lab credentials expire after a few hours. Re-paste them into `~/.aws/credentials` if you see `ExpiredTokenException`.
 
 ### SSH Key Pair
 
-Ansible connects to the EC2 instance over SSH. You need an RSA key pair at `~/.ssh/id_rsa` / `~/.ssh/id_rsa.pub`. Generate one if you do not have it:
+Ansible connects to the EC2 instance over SSH. Generate a dedicated key pair for this project if you do not already have one:
 
 ```bash
-ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/minecraft_part2 -N ""
+```
+
+Make sure `terraform.tfvars` points to the correct public key:
+
+```hcl
+public_key_path = "~/.ssh/minecraft_part2.pub"
 ```
 
 ---
@@ -152,40 +171,40 @@ minecraft-server/
 ## Pipeline Diagram
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         Local Workstation                            │
-│                                                                      │
-│  1. Export AWS credentials (from Learner Lab)                        │
-│  2. Copy terraform.tfvars.example → terraform.tfvars                 │
-│  3. Run: ./scripts/deploy.sh                                         │
-│                │                                                     │
-│                ▼                                                     │
-│  ┌─────────────────────────┐                                         │
-│  │   terraform init        │  Downloads AWS provider plugin          │
-│  │   terraform plan        │  Shows what will be created             │
-│  │   terraform apply       │  Creates VPC, SG, EC2, key pair         │
-│  └────────────┬────────────┘                                         │
-│               │ outputs: instance_public_ip                          │
-│               ▼                                                      │
-│  ┌─────────────────────────┐                                         │
-│  │  generate_inventory.sh  │  Writes ansible/inventory/hosts.ini     │
-│  └────────────┬────────────┘                                         │
-│               │                                                      │
-│               ▼                                                      │
-│  ┌─────────────────────────┐                                         │
-│  │  ansible-playbook       │  SSH into EC2 instance                  │
-│  │  minecraft.yml          │  ├── Install Docker Engine              │
-│  │                         │  ├── Pull itzg/minecraft-server image   │
-│  │                         │  ├── Deploy minecraft.service (systemd) │
-│  │                         │  └── Start & enable service             │
-│  └────────────┬────────────┘                                         │
-│               │                                                      │
-│               ▼                                                      │
-│  ┌─────────────────────────┐                                         │
-│  │  nmap -sV -Pn           │  Confirms port 25565 is open            │
-│  │  -p T:25565 <IP>        │                                         │
-│  └─────────────────────────┘                                         │
-└─────────────────────────────────────────────────────────────────────┘
+
+│                         Local Workstation                           │
+│                                                                     │
+│  1. Paste AWS credentials into ~/.aws/credentials                   │
+│  2. Copy terraform.tfvars.example → terraform.tfvars                │
+│  3. Run: ./scripts/deploy.sh                                        │
+│                │                                                    │
+│                ▼                                                    │
+│                                          │
+│  │   terraform init        │  Downloads AWS provider plugi          │
+│  │   terraform plan        │  Shows what will be created            │
+│  │   terraform apply       │  Creates VPC, SG, EC2, key pair        │
+│                                          │
+│               │ outputs: instance_public_ip                         │
+│               ▼                                                     │
+│                                          │
+│  │  generate_inventory.sh  │  Writes ansible/inventory/hosts.ini    │
+│                                          │
+│               │                                                     │
+│               ▼                                                     │
+│                                          │
+│  │  ansible-playbook       │  SSH into EC2 instance                 │
+│  │  minecraft.yml          │  ├── Install Docker Engine             │
+│  │                         │  ├── Pull itzg/minecraft-server image  │
+│  │                         │  ├── Deploy minecraft.service (systemd)│
+│  │                         │  └── Start & enable service            │
+│                                          │
+│               │                                                     │
+│               ▼                                                     │
+│                                          │
+│  │  nmap -sV -Pn           │  Confirms port 25565 is open           │
+│  │  -p T:25565 <IP>        │                                        │
+│                                                                     │
+
 ```
 
 ---
@@ -199,15 +218,34 @@ git clone https://github.com/<your-username>/minecraft-server.git
 cd minecraft-server
 ```
 
-### 2. Install Ansible Galaxy Requirements
+### 2. Generate SSH Key Pair
 
 ```bash
-cd ansible
-ansible-galaxy collection install -r requirements.yml
-cd ..
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/minecraft_part2 -N ""
 ```
 
-### 3. Configure Terraform Variables
+### 3. Configure AWS Credentials
+
+```bash
+nano ~/.aws/credentials
+```
+
+Paste the following (from Canvas → Learner Lab → AWS Details):
+
+```
+[default]
+aws_access_key_id=ASIA...
+aws_secret_access_key=...
+aws_session_token=...
+```
+
+Verify:
+
+```bash
+aws sts get-caller-identity
+```
+
+### 4. Configure Terraform Variables
 
 ```bash
 cp terraform/terraform.tfvars.example terraform/terraform.tfvars
@@ -215,20 +253,13 @@ cp terraform/terraform.tfvars.example terraform/terraform.tfvars
 
 Edit `terraform/terraform.tfvars` to match your setup. The key fields:
 
-| Variable | Default | Description |
-| `aws_region` | `us-east-1` | AWS region to deploy into |
-| `instance_type` | `t3.micro` | EC2 instance size (matches Part 1) |
-| `root_volume_size` | `10` | EBS volume in GiB (matches Part 1) |
-| `public_key_path` | `~/.ssh/id_rsa.pub` | Path to your SSH public key |
-| `ssh_allowed_cidr` | `0.0.0.0/0` | Restrict SSH to your IP for security |
-
-### 4. Export AWS Credentials
-
-```bash
-export AWS_ACCESS_KEY_ID="ASIA..."
-export AWS_SECRET_ACCESS_KEY="..."
-export AWS_SESSION_TOKEN="..."
-```
+| Variable           | Default                      | Description                          |
+|                    |                              |                                      |
+| `aws_region`       | `us-east-1`                  | AWS region to deploy into            |
+| `instance_type`    | `t3.micro`                   | EC2 instance size                    |
+| `root_volume_size` | `10`                         | EBS volume in GiB                    |
+| `public_key_path`  | `~/.ssh/minecraft_part2.pub` | Path to your SSH public key          |
+| `ssh_allowed_cidr` | `0.0.0.0/0`                  | Restrict SSH to your IP for security |
 
 ---
 
