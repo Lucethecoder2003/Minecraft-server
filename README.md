@@ -57,9 +57,9 @@ Your Workstation
       │
       └── ansible-playbook  ──►  EC2 Instance
                                       │
-                                      ├── Docker Engine
-                                      │       └── itzg/minecraft-server container
-                                      │               └── port 25565 (TCP/UDP)
+                                      │- Docker Engine
+                                      │       - itzg/minecraft-server container
+                                      │               - port 25565 (TCP/UDP)
                                       │
                                       └── systemd: minecraft.service
                                               ├── Restart=on-failure
@@ -156,7 +156,7 @@ minecraft-server/
 │                         Local Workstation                            │
 │                                                                      │
 │  1. Export AWS credentials (from Learner Lab)                        │
-│  2. Copy terraform.tfvars.example → terraform.tfvars                │
+│  2. Copy terraform.tfvars.example → terraform.tfvars                 │
 │  3. Run: ./scripts/deploy.sh                                         │
 │                │                                                     │
 │                ▼                                                     │
@@ -216,7 +216,6 @@ cp terraform/terraform.tfvars.example terraform/terraform.tfvars
 Edit `terraform/terraform.tfvars` to match your setup. The key fields:
 
 | Variable | Default | Description |
-|---|---|---|
 | `aws_region` | `us-east-1` | AWS region to deploy into |
 | `instance_type` | `t3.micro` | EC2 instance size (matches Part 1) |
 | `root_volume_size` | `10` | EBS volume in GiB (matches Part 1) |
