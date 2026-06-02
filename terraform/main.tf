@@ -12,7 +12,7 @@ provider "aws" {
   region = var.aws_region
 }
 
-# ── VPC & Networking ────────────────────────────────────────────────────────
+#VPC & Networking
 
 resource "aws_vpc" "minecraft" {
   cidr_block           = "10.0.0.0/16"
@@ -65,7 +65,7 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
-# ── Security Group ──────────────────────────────────────────────────────────
+#Security Group
 
 resource "aws_security_group" "minecraft" {
   name        = "minecraft_security_settings"
@@ -110,7 +110,7 @@ resource "aws_security_group" "minecraft" {
   }
 }
 
-# ── Key Pair ────────────────────────────────────────────────────────────────
+#Key Pair
 
 resource "aws_key_pair" "minecraft" {
   key_name   = "${var.project_name}-key"
@@ -121,7 +121,7 @@ resource "aws_key_pair" "minecraft" {
   }
 }
 
-# ── EC2 Instance ────────────────────────────────────────────────────────────
+#EC2 Instance
 
 data "aws_ami" "ubuntu" {
   most_recent = true
