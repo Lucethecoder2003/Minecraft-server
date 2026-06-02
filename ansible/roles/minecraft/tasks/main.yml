@@ -16,7 +16,7 @@
       - python3-pip
     state: present
 
-# ── Docker Installation ─────────────────────────────────────────────────────
+# Docker Installation 
 
 - name: Create Docker GPG keyring directory
   ansible.builtin.file:
@@ -63,7 +63,7 @@
     groups: docker
     append: true
 
-# ── Minecraft Data Directory ────────────────────────────────────────────────
+# Minecraft Data Directory
 
 - name: Create Minecraft data directory
   ansible.builtin.file:
@@ -73,7 +73,7 @@
     group: ubuntu
     mode: "0755"
 
-# ── Systemd Service ─────────────────────────────────────────────────────────
+# Systemd Service
 
 - name: Deploy Minecraft systemd service file
   ansible.builtin.template:
@@ -93,7 +93,7 @@
     enabled: true
     daemon_reload: true
 
-# ── Pull Docker Image & Start Container ────────────────────────────────────
+# Pull Docker Image & Start Container 
 
 - name: Pull itzg/minecraft-server Docker image
   community.docker.docker_image:
@@ -113,4 +113,4 @@
     port: "{{ minecraft_port }}"
     host: "{{ ansible_host }}"
     delay: 10
-    timeout: 180
+    timeout: 300
